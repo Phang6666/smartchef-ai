@@ -94,6 +94,13 @@
                         </button>
                     </div>
 
+                    @if (!empty($imageUrl))
+                    <div class="relative mb-6">
+                        <img src="{{ $imageUrl }}" alt="Photo of {{ $recipe['recipeName'] }}" class="w-full h-64 object-cover rounded-2xl shadow-lg">
+                        <div class="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent rounded-2xl"></div>
+                    </div>
+                    @endif
+
                     <div class="relative">
                         <h2 class="text-4xl font-extrabold text-gray-900 mb-3 text-center">{{ $recipe['recipeName'] }}</h2>
                         <p class="text-gray-600 text-center mb-8 max-w-2xl mx-auto leading-relaxed">

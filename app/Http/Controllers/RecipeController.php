@@ -92,8 +92,12 @@ class RecipeController extends Controller
                 return view('welcome', ['error' => $error]);
             }
 
+            // **NEW:** Get an image URL using the recipe name as the search query
+            $imageUrl = $this->getImageUrlForRecipe($recipeData['recipeName'], $ingredients);
+
             return view('welcome', [
                 'recipe' => $recipeData,
+                'imageUrl' => $imageUrl,
                 'previous_ingredients' => $ingredients,
                 'previous_cuisine' => $cuisine
             ]);
@@ -143,12 +147,169 @@ class RecipeController extends Controller
         // 4. Simulate a 1-second delay to test your loading spinner
         sleep(1);
 
-        // 5. Return the view with the mock data
+        // **NEW:** Provide a hard-coded placeholder image for mock mode
+        $mockImageUrl = 'https://cdn.pixabay.com/photo/2017/01/16/17/45/pancake-1984716_640.jpg';
+
+        // **NEW:** Pass the mock recipe data AND the mock image URL to the view
         return view('welcome', [
             'recipe' => $mockRecipeData,
+            'imageUrl' => $mockImageUrl,
             'previous_ingredients' => $ingredients,
             'previous_cuisine' => $cuisine
         ]);
     }
 
+
+
+    /**
+     * Searches for an image using a multi-tiered fallback system with keyword analysis.
+     *
+     * @param string $recipeName The creative recipe name from the AI.
+     * @param string $ingredients The user's original ingredients string.
+     * @return string|null The URL of the best image found, or null.
+     */
+    private function getImageUrlForRecipe(string $recipeName, string $ingredients): ?string
+    {
+        $apiKey = config('services.pixabay.api_key');
+
+        // Tier 1: Smart combined search (NEW)
+        $smartQuery = $this->buildSmartSearchQuery($recipeName, $ingredients);
+        $imageUrl = $this->fetchPixabayImage($smartQuery, $apiKey);
+        if ($imageUrl) return $imageUrl;
+
+         // Tier 2: Try a simplified version of the recipe name
+        $simplifiedName = $this->simplifyRecipeName($recipeName);
+        if ($simplifiedName && $simplifiedName !== $recipeName) {
+            $imageUrl = $this->fetchPixabayImage($simplifiedName, $apiKey);
+            if ($imageUrl) {
+                return $imageUrl;
+            }
+        }
+
+        // Tier 3: If that failed, try searching for the raw ingredients
+        $imageUrl = $this->fetchPixabayImage($ingredients, $apiKey);
+        if ($imageUrl) {
+            return $imageUrl; // Success on the fallback query!
+        }
+
+        // Tier 4: Find the "hero ingredient"
+        $heroIngredient = $this->findHeroIngredient($ingredients);
+        if ($heroIngredient) {
+            $imageUrl = $this->fetchPixabayImage($heroIngredient, $apiKey);
+            if ($imageUrl) {
+                return $imageUrl; // Success on the "hero ingredient"!
+            }
+        }
+
+        // If all three tiers fail, we give up and return null.
+        return 'https://cdn.pixabay.com/photo/2017/01/22/19/20/spices-2003656_1280.jpg';
+    }
+
+    /**
+     * A helper function to find the most important "hero" ingredient from a string.
+     *
+     * @param string $ingredients The user's input string.
+     * @return string|null The best keyword found, or null.
+     */
+    private function findHeroIngredient(string $ingredients): ?string
+    {
+        // A list of common, generic words to ignore.
+        $stopWords = [
+            'salt', 'pepper', 'oil', 'water', 'sugar', 'flour', 'spice', 'spices', 'herbs',
+            'sauce', 'garlic', 'onion', 'powder', 'flakes', 'dried', 'fresh', 'ground'
+        ];
+
+        // 1. Split the user's input into individual words.
+        $words = preg_split('/[,\s]+/', strtolower($ingredients));
+
+        // 2. Filter out any empty words and the common "stop words".
+        $keywords = array_filter($words, function ($word) use ($stopWords) {
+            return !empty($word) && !in_array($word, $stopWords);
+        });
+
+        // 3. Return the first important keyword we find.
+        // reset() gets the first element of an array without needing to know its index.
+        return reset($keywords) ?: null;
+    }
+
+
+    /**
+     * A helper function to perform the actual Pixabay API call.
+     * (This function remains unchanged)
+     */
+    private function fetchPixabayImage(string $query, string $apiKey): ?string
+    {
+        if (empty($query)) {
+            return null;
+        }
+        $url = "https://pixabay.com/api/?key={$apiKey}&q=" . urlencode($query) . "&image_type=photo&orientation=horizontal&safesearch=true&per_page=3";
+        try {
+            $response = Http::withOptions(['verify' => 'C:\\wamp64\\bin\\php\\php7.4.33\\extras\\ssl\\cacert.pem'])->get($url);
+            if ($response->successful() && !empty($response->json('hits'))) {
+                return $response->json('hits.0.webformatURL');
+            }
+        } catch (\Exception $e) {
+            return null;
+        }
+        return null;
+    }
+
+    /**
+     * Simplifies creative AI recipe names by removing adjectives and extra words.
+     * Example: "Sunset Chicken with Golden Rice Volcano" → "Chicken Rice"
+     */
+    private function simplifyRecipeName(string $name): string
+    {
+        // Convert to lowercase and remove punctuation
+        $cleaned = strtolower(preg_replace('/[^a-zA-Z\s]/', '', $name));
+
+        // Split into words
+        $words = explode(' ', $cleaned);
+
+        // List of common adjectives and fluff words to ignore
+        $ignoreWords = [
+            'sunset', 'golden', 'creamy', 'hearty', 'delicious', 'tasty', 'spicy', 'sweet',
+            'savory', 'fluffy', 'volcano', 'fusion', 'burst', 'bowl', 'delight', 'dream',
+            'perfect', 'crunchy', 'juicy', 'flavor', 'amazing', 'inspired', 'special', 'ultimate'
+        ];
+
+        // Filter out unhelpful words
+        $filtered = array_filter($words, function ($word) use ($ignoreWords) {
+            return !in_array($word, $ignoreWords) && strlen($word) > 2;
+        });
+
+        // Keep at most 2 main keywords for a clean query
+        $main = array_slice($filtered, 0, 2);
+
+        // Return simplified, title-cased name
+        return ucwords(implode(' ', $main));
+    }
+
+    private function buildSmartSearchQuery(string $recipeName, string $ingredients): string
+    {
+        // Clean and lowercase both recipe name and ingredients
+        $text = strtolower($recipeName . ' ' . $ingredients);
+        $text = preg_replace('/[^a-z\s]/', '', $text);
+
+        // Split into individual words
+        $words = explode(' ', $text);
+
+        // Common stop/adjective words to remove
+        $ignoreWords = [
+            'the','a','and','with','of','in','on','for','style','fusion',
+            'golden','spicy','sweet','creamy','crunchy','fresh','flavor',
+            'delicious','tasty','amazing','perfect','savory','ultimate'
+        ];
+
+        // Keep meaningful food-related keywords
+        $filtered = array_filter($words, function ($word) use ($ignoreWords) {
+            return !in_array($word, $ignoreWords) && strlen($word) > 2;
+        });
+
+        // De-duplicate and keep at most 3–4 strong terms
+        $keywords = array_unique(array_slice($filtered, 0, 4));
+
+        // Join them into one powerful search query
+        return implode(' ', $keywords);
+    }
 }

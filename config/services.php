@@ -37,4 +37,8 @@ return [
     'google' => [
     'project_id' => env('GOOGLE_PROJECT_ID'),
     ],
+
+    'pixabay' => [
+    'api_key' => env('PIXABAY_API_KEY'),
+    ],
 ];
