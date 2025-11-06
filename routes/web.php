@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\RecipeController;
 
 /*
 |--------------------------------------------------------------------------
@@ -13,6 +14,13 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::get('/', function () {
-    return view('welcome');
+// Route to display the main page with the form
+Route::get('/', [RecipeController::class, 'index'])->name('home');
+
+// Route to handle the form submission and generate the recipe
+Route::post('/generate-recipe', [RecipeController::class, 'generate'])->name('recipe.generate');
+
+// Add this temporary route for debugging
+Route::get('/info', function () {
+    phpinfo();
 });
