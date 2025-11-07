@@ -76,7 +76,6 @@ class RecipeController extends Controller
         \"recipeName\": \"A creative and short recipe name\",
         \"description\": \"A brief, engaging, one-paragraph description of the dish.\",
         \"cookingTime\": \"A string, e.g., 'Approx. 45 minutes'\",
-        \"calories\": \"A string, e.g., '~650 kcal per serving'\",
         \"difficulty\": \"A string, either Easy, Medium, or Hard\",
         \"cuisine\": \"A string describing the cuisine style of the generated recipe\",
         \"servings\": \"A string, e.g., 'Serves 2-3 people'\",
@@ -156,9 +155,13 @@ class RecipeController extends Controller
     }
 
 
+    /**
+     * Generates a FAKE (mock) recipe for testing the frontend.
+     * The output format is identical to the real API response flow.
+     */
     public function generateMock(Request $request)
     {
-        // 1. Validate all user inputs
+        // 1. Validate all possible user inputs
         $request->validate([
             'ingredients' => 'required|string|min:5',
             'cuisine_select' => 'nullable|string',
@@ -167,67 +170,63 @@ class RecipeController extends Controller
             'diet_other' => 'nullable|string',
         ]);
 
-        // 2. We get the inputs so we can display them in the mock data
+        // 2. Get and process all inputs to mirror the real 'generate' method
         $ingredients = $request->input('ingredients');
+
+        // Hybrid logic for cuisine
         $cuisineSelection = $request->input('cuisine_select');
         $cuisineOther = $request->input('cuisine_other');
-
-        // If the user chose "Other" AND typed something, use their text.
-        // Otherwise, use the dropdown selection. Default to 'any'.
-        // --- HYBRID LOGIC FOR CUISINE ---
         if ($cuisineSelection === 'other' && !empty($cuisineOther)) {
             $cuisine = $cuisineOther;
         } else {
             $cuisine = $cuisineSelection ?: 'any';
         }
 
-        // --- HYBRID LOGIC FOR DIET ---
+        // Hybrid logic for diet
         $dietSelection = $request->input('diet_select');
         $dietOther = $request->input('diet_other');
-
         if ($dietSelection === 'other' && !empty($dietOther)) {
             $diet = $dietOther;
         } else {
             $diet = $dietSelection ?: 'none';
         }
 
-        // 3. Create a fake recipe and nutrition data array with the exact same structure
+
+        // 3. Create a fake recipe data array (without the 'calories' key)
         $mockRecipeData = [
-            "recipeName" => "Mock Spicy Noodles (For Testing)",
-            "description" => "A delicious and easy-to-make mock noodle dish perfect for testing the UI. This confirms the form is working. The cuisine style requested was: " . htmlspecialchars(ucfirst($cuisine)),
-            "cookingTime" => "Approx. 10 minutes",
-            "calories" => "~400 kcal per serving",
+            "recipeName" => "Mock '{$cuisine}' Noodles (Testing Mode)",
+            "description" => "This is a mock recipe generated for testing purposes. It confirms that the form is working correctly and allows for UI styling without using real API calls. The selected dietary goal was: " . htmlspecialchars(ucfirst($diet)),
+            "cookingTime" => "Approx. 15 minutes",
             "difficulty" => "Easy",
             "cuisine" => htmlspecialchars(ucfirst($cuisine)),
-            "servings" => "Serves 1",
+            "servings" => "Serves 2 (mock)",
             "ingredients" => [
                 "1 packet of instant noodles",
                 "1 egg",
-                "A splash of soy sauce",
                 "Your ingredients: " . htmlspecialchars($ingredients)
             ],
             "instructions" => [
-                "This is a mock recipe. Boil water and cook noodles.",
-                "While noodles are cooking, fry an egg.",
-                "Drain the noodles, add the seasoning packet and soy sauce.",
-                "Place the fried egg on top and enjoy testing the beautiful UI you've built!"
+                "This is a mock instruction step.",
+                "It's designed to test the layout and styling.",
+                "Enjoy building your fantastic application!"
             ]
         ];
 
+        // 4. Create a fake nutrition data array
         $mockNutritionData = [
-            'calories' => 450.75,
-            'protein' => 25.5,
-            'fat' => 15.2,
-            'carbs' => 50.1
+            'calories' => 750.0,
+            'protein' => 28.5,
+            'fat' => 22.1,
+            'carbs' => 110.8
         ];
 
-        // 4. Simulate a 1-second delay to test your loading spinner
-        sleep(1);
-
-        // **NEW:** Provide a hard-coded placeholder image for mock mode
+        // 5. Provide a hard-coded placeholder image for mock mode
         $mockImageUrl = 'https://cdn.pixabay.com/photo/2017/01/16/17/45/pancake-1984716_640.jpg';
 
-        // **NEW:** Pass the mock recipe data AND the mock image URL to the view
+        // 6. Simulate a 1-second delay to test loading animations
+        sleep(1);
+
+        // 7. Return the view with all the necessary data, matching the real function's output
         return view('welcome', [
             'recipe' => $mockRecipeData,
             'imageUrl' => $mockImageUrl,

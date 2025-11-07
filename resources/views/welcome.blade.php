@@ -192,11 +192,10 @@
                             </div>
                         </div>
 
-                        <div class="relative grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-6 bg-gradient-to-br from-green-50 to-green-100 p-6 rounded-2xl mb-10 border border-green-200 shadow-inner">
+                        <div class="relative grid grid-cols-2 md:grid-cols-4 gap-6 bg-gradient-to-br from-green-50 to-green-100 p-6 rounded-2xl mb-10 border border-green-200 shadow-inner">
                             @php
                                 $details = [
                                     ['icon' => '<path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>', 'label' => 'Time', 'value' => $recipe['cookingTime']],
-                                    ['icon' => '<path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/>', 'label' => 'Calories', 'value' => $recipe['calories']],
                                     ['icon' => '<path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>', 'label' => 'Difficulty', 'value' => $recipe['difficulty']],
                                     ['icon' => '<path stroke-linecap="round" stroke-linejoin="round" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2h8a2 2 0 002-2v-1a2 2 0 012-2h1.945M7.737 11l-.261-2.61m1.104-5.52l.26-2.609M10.5 7.5l.261-2.61M13.5 7.5l.261-2.61M16.263 11l.261-2.61m1.104-5.52l-.26-2.609M12 21V11"/>', 'label' => 'Cuisine', 'value' => $recipe['cuisine']],
                                     ['icon' => '<path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>', 'label' => 'Servings', 'value' => $recipe['servings']],
@@ -216,23 +215,34 @@
 
                         @if (isset($nutrition) && is_array($nutrition))
                             <div class="relative mt-8">
-                                <h3 class="text-2xl font-bold text-green-700 mb-4 text-center">Predicted Nutrition (per serving)</h3>
-                                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-center bg-slate-50 p-4 rounded-2xl border shadow-inner">
-                                    <div class="p-2">
-                                        <span class="text-lg font-bold text-slate-800">{{ round($nutrition['calories']) }}</span>
-                                        <span class="block text-sm font-medium text-slate-600">Calories</span>
+                                <h3 class="text-2xl font-bold text-green-700 mb-6 text-center">Predicted Nutrition Breakdown</h3>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-center bg-slate-50 p-6 rounded-2xl border shadow-inner">
+
+                                    <!-- Left Side: Pie Chart for Macros -->
+                                    <div class="w-full h-64 flex justify-center items-center">
+                                        <canvas id="macro-pie-chart"></canvas>
                                     </div>
-                                    <div class="p-2">
-                                        <span class="text-lg font-bold text-slate-800">{{ round($nutrition['protein']) }}g</span>
-                                        <span class="block text-sm font-medium text-slate-600">Protein</span>
-                                    </div>
-                                    <div class="p-2">
-                                        <span class="text-lg font-bold text-slate-800">{{ round($nutrition['fat']) }}g</span>
-                                        <span class="block text-sm font-medium text-slate-600">Fat</span>
-                                    </div>
-                                    <div class="p-2">
-                                        <span class="text-lg font-bold text-slate-800">{{ round($nutrition['carbs']) }}g</span>
-                                        <span class="block text-sm font-medium text-slate-600">Carbs</span>
+
+                                    <!-- Right Side: Calorie Bar Chart and Details -->
+                                    <div class="flex flex-col justify-center">
+                                        <h4 class="text-xl font-semibold text-slate-800 text-center mb-3">Total Calories for Full Recipe</h4>
+                                        <div class="w-full h-20 mb-4">
+                                            <canvas id="calorie-bar-chart"></canvas>
+                                        </div>
+                                        <div class="grid grid-cols-3 gap-2 text-center">
+                                            <div class="bg-blue-100 p-2 rounded-lg">
+                                                <span class="text-lg font-bold text-blue-800">{{ round($nutrition['protein']) }}g</span>
+                                                <span class="block text-sm font-medium text-blue-600">Protein</span>
+                                            </div>
+                                            <div class="bg-red-100 p-2 rounded-lg">
+                                                <span class="text-lg font-bold text-red-800">{{ round($nutrition['fat']) }}g</span>
+                                                <span class="block text-sm font-medium text-red-600">Fat</span>
+                                            </div>
+                                            <div class="bg-yellow-100 p-2 rounded-lg">
+                                                <span class="text-lg font-bold text-yellow-800">{{ round($nutrition['carbs']) }}g</span>
+                                                <span class="block text-sm font-medium text-yellow-600">Carbs</span>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -324,6 +334,7 @@
         <p>Built by <span class="font-semibold text-green-700">Phang Jet</span> | Powered by <span class="font-semibold text-green-700">Google Gemini AI</span></p>
     </footer>
 
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
     <script>
@@ -542,6 +553,87 @@ Generated by SmartChef AI
                         shareText.textContent = originalText;
                     }, 2000);
                 });
+            }
+
+            // --- SCRIPT FOR THE NUTRITION CHARTS ---
+            const nutritionData = @json($nutrition ?? null); // Safely pass Laravel data to JS
+
+            if (nutritionData) {
+                // --- 1. Create the Pie Chart for Macros ---
+                const pieCtx = document.getElementById('macro-pie-chart');
+                if (pieCtx) {
+                    new Chart(pieCtx, {
+                        type: 'doughnut', // Doughnut is a pie chart with a hole, looks more modern
+                        data: {
+                            labels: ['Protein (g)', 'Fat (g)', 'Carbs (g)'],
+                            datasets: [{
+                                label: 'Macronutrients',
+                                data: [
+                                    nutritionData.protein,
+                                    nutritionData.fat,
+                                    nutritionData.carbs
+                                ],
+                                backgroundColor: [
+                                    'rgba(59, 130, 246, 0.7)', // Blue for Protein
+                                    'rgba(239, 68, 68, 0.7)',  // Red for Fat
+                                    'rgba(234, 179, 8, 0.7)'   // Yellow for Carbs
+                                ],
+                                borderColor: [
+                                    'rgba(59, 130, 246, 1)',
+                                    'rgba(239, 68, 68, 1)',
+                                    'rgba(234, 179, 8, 1)'
+                                ],
+                                borderWidth: 1
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: {
+                                    position: 'top',
+                                },
+                                title: {
+                                    display: true,
+                                    text: 'Macronutrient Ratio'
+                                }
+                            }
+                        }
+                    });
+                }
+
+                // --- 2. Create the Bar Chart for Calories ---
+                const barCtx = document.getElementById('calorie-bar-chart');
+                if (barCtx) {
+                    new Chart(barCtx, {
+                        type: 'bar',
+                        data: {
+                            labels: ['Calories'],
+                            datasets: [{
+                                label: 'Total Calories (kcal)',
+                                data: [nutritionData.calories],
+                                backgroundColor: ['rgba(22, 163, 74, 0.7)'], // Green
+                                borderColor: ['rgba(22, 163, 74, 1)'],
+                                borderWidth: 1
+                            }]
+                        },
+                        options: {
+                            indexAxis: 'y', // Makes the bar horizontal
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: {
+                                    display: false // Hide legend for a single bar
+                                }
+                            },
+                            scales: {
+                                x: {
+                                    beginAtZero: true
+                                }
+                            }
+                        }
+                    });
+                }
             }
         });
 
