@@ -2,9 +2,6 @@
 
 **SmartChef AI** is a full-stack web application that transforms user-provided ingredients into creative, delicious recipes using a multi-system AI platform. It features an intelligent backend, a polished user interface, and a custom-built machine learning model for nutritional analysis.
 
-<!-- Optional: Add a link to the live demo once it's deployed -->
-**[ ➡️ View Live Demo (Coming Soon!) ]**
-
 ---
 
 ### 🏛️ System Architecture
@@ -41,9 +38,12 @@ The data flow is as follows:
 
 ### 📸 Screenshots
 
-<!-- Take a great screenshot of your final application and place it here! -->
-<!-- To do this: 1. Create a `screenshots` folder in your project. 2. Save your image as `app-screenshot.png` inside it. 3. Uncomment the line below. -->
-<!-- ![SmartChef AI Screenshot](screenshots/app-screenshot.png) -->
+
+**Clean Input Form:**
+![SmartChef AI - Homepage and Form](screenshots/screenshot-homepage.png)
+
+**The Final Recipe Result:**
+![SmartChef AI - Recipe Result](screenshots/screenshot-recipe-result.png)
 
 ---
 
